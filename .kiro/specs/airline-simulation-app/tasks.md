@@ -12,7 +12,13 @@
   - Set up Entity Framework Core with PostgreSQL connection
   - _Requirements: 9.1, 9.3_
 
-- [ ] 2. Core Domain Models and Database Schema
+- [x] 2. Core Domain Models and Database Schema
+
+
+
+
+
+
   - Create Entity Framework models for Flight, Booking, Passenger, and ApplicationUser
   - Implement database context with proper entity configurations and indexes
   - Create and run initial database migrations
