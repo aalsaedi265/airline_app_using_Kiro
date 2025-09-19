@@ -563,6 +563,7 @@ dist/
 logs/
 
 # Environment files
+.env
 .env*
 !.env.example
 

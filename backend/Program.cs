@@ -17,8 +17,13 @@ builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
-// Database configuration
+// Database configuration - use environment variable for password
 var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
+var postgresPassword = Environment.GetEnvironmentVariable("POSTGRES_PASSWORD");
+if (!string.IsNullOrEmpty(postgresPassword))
+{
+    connectionString = connectionString.Replace("Password=placeholder", $"Password={postgresPassword}");
+}
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
     options.UseNpgsql(connectionString));
 
