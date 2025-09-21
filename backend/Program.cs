@@ -55,9 +55,13 @@ builder.Services.AddAuthentication(options =>
 });
 
 // Redis configuration
+var redisConnectionString = builder.Configuration.GetConnectionString("Redis");
+redisConnectionString = redisConnectionString?.Replace("${REDIS_CONNECTION_STRING}", 
+    Environment.GetEnvironmentVariable("REDIS_CONNECTION_STRING") ?? "localhost:6379");
+
 builder.Services.AddStackExchangeRedisCache(options =>
 {
-    options.Configuration = builder.Configuration.GetConnectionString("Redis");
+    options.Configuration = redisConnectionString;
 });
 
 // Hangfire configuration
@@ -101,6 +105,7 @@ builder.Services.AddHttpClient<IWeatherService, OpenWeatherMapService>(client =>
 builder.Services.AddScoped<IFlightService, FlightService>();
 builder.Services.AddScoped<IBookingService, BookingService>();
 builder.Services.AddScoped<INotificationService, NotificationService>();
+builder.Services.AddScoped<FlightUpdateBackgroundService>();
 
 var app = builder.Build();
 
@@ -125,5 +130,8 @@ app.UseHangfireDashboard();
 
 // SignalR Hubs
 app.MapHub<FlightUpdatesHub>("/flightUpdatesHub");
+
+// Schedule background jobs
+FlightUpdateJobScheduler.ScheduleRecurringJobs();
 
 app.Run();
