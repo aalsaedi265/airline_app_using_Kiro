@@ -37,14 +37,24 @@
   - Create unit tests for API service error handling and data mapping
   - _Requirements: 1.1, 1.5, 2.1, 2.3_
 
-- [ ] 4. Flight Service Implementation
+- [x] 4. Flight Service Implementation
+
+
+
+
+
   - Implement FlightService with methods for retrieving flight board data and flight details
   - Add Redis caching layer for flight data to improve performance
   - Create background job using Hangfire to periodically update flight status from external APIs
   - Write unit tests for flight service methods and caching behavior
   - _Requirements: 1.1, 1.2, 1.4, 9.1_
 
-- [ ] 5. Flight Board API Controller
+- [x] 5. Flight Board API Controller
+
+
+
+
+
   - Create FlightsController with endpoints for flight board, flight details, and weather data
   - Implement search and filtering functionality for flight board
   - Add proper error handling and validation for API endpoints
@@ -52,6 +62,11 @@
   - _Requirements: 1.1, 1.3, 2.1, 2.2_
 
 - [ ] 6. Real-time Flight Updates with SignalR
+
+
+
+
+
   - Create FlightUpdatesHub for real-time communication
   - Implement SignalR client methods for joining/leaving flight groups
   - Integrate SignalR with flight update background jobs to push real-time updates

@@ -1,4 +1,5 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
+import { apiService } from '../services/api';
 
 interface User {
   id: string;
@@ -17,10 +18,8 @@ interface AuthContextType {
 
 interface RegisterData {
   email: string;
-  password: string;
   firstName: string;
   lastName: string;
-  phoneNumber: string;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -58,14 +57,14 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
   const login = async (email: string, password: string): Promise<boolean> => {
     try {
-      // Placeholder implementation - will be replaced with actual API call
+      const response = await apiService.login(email, password);
+      localStorage.setItem('authToken', response.token);
       setUser({
-        id: '1',
-        email,
-        firstName: 'John',
-        lastName: 'Doe'
+        id: response.user.id,
+        email: response.user.email,
+        firstName: response.user.firstName,
+        lastName: response.user.lastName
       });
-      localStorage.setItem('authToken', 'placeholder-token');
       return true;
     } catch (error) {
       console.error('Login failed:', error);
@@ -75,14 +74,14 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
   const register = async (userData: RegisterData): Promise<boolean> => {
     try {
-      // Placeholder implementation - will be replaced with actual API call
+      const response = await apiService.register(userData.email, userData.firstName, userData.lastName);
+      localStorage.setItem('authToken', response.token);
       setUser({
-        id: '1',
-        email: userData.email,
-        firstName: userData.firstName,
-        lastName: userData.lastName
+        id: response.user.id,
+        email: response.user.email,
+        firstName: response.user.firstName,
+        lastName: response.user.lastName
       });
-      localStorage.setItem('authToken', 'placeholder-token');
       return true;
     } catch (error) {
       console.error('Registration failed:', error);

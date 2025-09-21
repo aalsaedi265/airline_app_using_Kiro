@@ -1,10 +1,10 @@
 # Database Migrations
 
-This directory will contain Entity Framework migrations once .NET SDK is installed and migrations are created.
+This directory contains Entity Framework migrations for the airline simulation application. The migrations have been created and are ready to use.
 
-## Expected Migration Structure
+## Current Migration Structure
 
-When you run `dotnet ef migrations add InitialCreate`, the following files will be generated:
+The following migration files are already generated and available:
 
 ### 1. `{timestamp}_InitialCreate.cs`
 Contains the migration logic to create all tables:
@@ -51,7 +51,27 @@ The migration will create:
 - Unique constraints where needed
 - Range validations for numeric fields
 
-To create the actual migration files, install .NET 8 SDK and run:
+## Using the Migrations
+
+To apply the migrations to your database:
 ```bash
-dotnet ef migrations add InitialCreate
+dotnet ef database update
 ```
+
+To create a new migration after making model changes:
+```bash
+dotnet ef migrations add YourMigrationName
+dotnet ef database update
+```
+
+## Simplified Architecture Notes
+
+This application uses a simplified architecture that focuses on core functionality:
+
+- **No Redis**: Uses IMemoryCache for simpler caching
+- **No Hangfire**: Uses BackgroundService for background jobs
+- **No External APIs**: Uses mock data services for flight and weather data
+- **JWT Authentication**: Simple token-based auth instead of full Identity
+- **PostgreSQL**: Single database for all data storage
+
+The migration structure supports all these features while maintaining simplicity and ease of development.

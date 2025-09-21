@@ -1,77 +1,46 @@
 using Microsoft.EntityFrameworkCore;
-using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
 using System.Text;
 using AirlineSimulationApi.Data;
-using AirlineSimulationApi.Models;
 using AirlineSimulationApi.Services;
 using AirlineSimulationApi.Hubs;
-using Hangfire;
-using Hangfire.PostgreSql;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// Add services to the container.
+// Add services to the container
 builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
-// Database configuration - substitute environment variables
-var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
-connectionString = connectionString
-    .Replace("${POSTGRES_DB}", Environment.GetEnvironmentVariable("POSTGRES_DB") ?? "AirlineSimulationDb")
-    .Replace("${POSTGRES_USER}", Environment.GetEnvironmentVariable("POSTGRES_USER") ?? "postgres")
-    .Replace("${POSTGRES_PASSWORD}", Environment.GetEnvironmentVariable("POSTGRES_PASSWORD") ?? "postgres");
+// Database configuration
+var connectionString = builder.Configuration.GetConnectionString("DefaultConnection") 
+    ?? "Host=localhost;Database=AirlineSimulationDb;Username=postgres;Password=postgres";
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
     options.UseNpgsql(connectionString));
 
-// Identity configuration
-builder.Services.AddIdentity<ApplicationUser, IdentityRole>()
-    .AddEntityFrameworkStores<ApplicationDbContext>()
-    .AddDefaultTokenProviders();
+// JWT Authentication (simplified)
+var jwtSecret = builder.Configuration["JwtSettings:Secret"] ?? "your-super-secret-key-that-is-at-least-32-characters-long";
+var key = Encoding.ASCII.GetBytes(jwtSecret);
 
-// JWT Authentication
-var jwtSettings = builder.Configuration.GetSection("JwtSettings");
-var jwtSecret = jwtSettings["Secret"]?.Replace("${JWT_SECRET}", Environment.GetEnvironmentVariable("JWT_SECRET") ?? "fallback-secret-key");
-var key = Encoding.ASCII.GetBytes(jwtSecret ?? "your-secret-key-here");
-
-builder.Services.AddAuthentication(options =>
-{
-    options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
-    options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
-})
-.AddJwtBearer(options =>
-{
-    options.RequireHttpsMetadata = false;
-    options.SaveToken = true;
-    options.TokenValidationParameters = new TokenValidationParameters
+builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
+    .AddJwtBearer(options =>
     {
-        ValidateIssuerSigningKey = true,
-        IssuerSigningKey = new SymmetricSecurityKey(key),
-        ValidateIssuer = false,
-        ValidateAudience = false
-    };
-});
+        options.RequireHttpsMetadata = false;
+        options.SaveToken = true;
+        options.TokenValidationParameters = new TokenValidationParameters
+        {
+            ValidateIssuerSigningKey = true,
+            IssuerSigningKey = new SymmetricSecurityKey(key),
+            ValidateIssuer = false,
+            ValidateAudience = false,
+            ValidateLifetime = true,
+            ClockSkew = TimeSpan.Zero
+        };
+    });
 
-// Redis configuration
-var redisConnectionString = builder.Configuration.GetConnectionString("Redis");
-redisConnectionString = redisConnectionString?.Replace("${REDIS_CONNECTION_STRING}", 
-    Environment.GetEnvironmentVariable("REDIS_CONNECTION_STRING") ?? "localhost:6379");
-
-builder.Services.AddStackExchangeRedisCache(options =>
-{
-    options.Configuration = redisConnectionString;
-});
-
-// Hangfire configuration
-builder.Services.AddHangfire(configuration => configuration
-    .SetDataCompatibilityLevel(CompatibilityLevel.Version_180)
-    .UseSimpleAssemblyNameTypeSerializer()
-    .UseRecommendedSerializerSettings()
-    .UsePostgreSqlStorage(connectionString));
-
-builder.Services.AddHangfireServer();
+// In-memory caching (simpler than Redis)
+builder.Services.AddMemoryCache();
 
 // SignalR
 builder.Services.AddSignalR();
@@ -101,15 +70,19 @@ builder.Services.AddHttpClient<IWeatherService, OpenWeatherMapService>(client =>
     client.Timeout = TimeSpan.FromSeconds(30);
 });
 
-// Application services
+// Application services (simplified)
 builder.Services.AddScoped<IFlightService, FlightService>();
 builder.Services.AddScoped<IBookingService, BookingService>();
+builder.Services.AddScoped<IPaymentService, PaymentService>();
 builder.Services.AddScoped<INotificationService, NotificationService>();
-builder.Services.AddScoped<FlightUpdateBackgroundService>();
+builder.Services.AddScoped<IBaggageService, BaggageService>();
+
+// Background services
+builder.Services.AddHostedService<FlightUpdateBackgroundService>();
 
 var app = builder.Build();
 
-// Configure the HTTP request pipeline.
+// Configure the HTTP request pipeline
 if (app.Environment.IsDevelopment())
 {
     app.UseSwagger();
@@ -117,21 +90,11 @@ if (app.Environment.IsDevelopment())
 }
 
 app.UseHttpsRedirection();
-
 app.UseCors("AllowReactApp");
-
 app.UseAuthentication();
 app.UseAuthorization();
 
 app.MapControllers();
-
-// Hangfire Dashboard
-app.UseHangfireDashboard();
-
-// SignalR Hubs
 app.MapHub<FlightUpdatesHub>("/flightUpdatesHub");
-
-// Schedule background jobs
-FlightUpdateJobScheduler.ScheduleRecurringJobs();
 
 app.Run();

@@ -67,9 +67,8 @@ public class SeatRow
 
 public class Seat
 {
-    public string SeatNumber { get; set; } = string.Empty;
-    public SeatClass SeatClass { get; set; }
+    public string Number { get; set; } = string.Empty;
+    public SeatClass Class { get; set; }
     public bool IsAvailable { get; set; }
-    public bool IsWindow { get; set; }
-    public bool IsAisle { get; set; }
+}
 }

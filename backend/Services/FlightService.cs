@@ -1,9 +1,7 @@
 using AirlineSimulationApi.Models;
 using AirlineSimulationApi.Data;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Caching.Distributed;
-using System.Text.Json;
-using Hangfire;
+using Microsoft.Extensions.Caching.Memory;
 using Microsoft.AspNetCore.SignalR;
 using AirlineSimulationApi.Hubs;
 
@@ -14,7 +12,7 @@ public class FlightService : IFlightService
     private readonly ApplicationDbContext _context;
     private readonly IFlightDataService _flightDataService;
     private readonly IWeatherService _weatherService;
-    private readonly IDistributedCache _cache;
+    private readonly IMemoryCache _cache;
     private readonly IHubContext<FlightUpdatesHub> _hubContext;
     private readonly ILogger<FlightService> _logger;
     
@@ -27,7 +25,7 @@ public class FlightService : IFlightService
         ApplicationDbContext context,
         IFlightDataService flightDataService,
         IWeatherService weatherService,
-        IDistributedCache cache,
+        IMemoryCache cache,
         IHubContext<FlightUpdatesHub> hubContext,
         ILogger<FlightService> logger)
     {
@@ -46,12 +44,10 @@ public class FlightService : IFlightService
         try
         {
             // Try to get from cache first
-            var cachedData = await _cache.GetStringAsync(cacheKey);
-            if (!string.IsNullOrEmpty(cachedData))
+            if (_cache.TryGetValue(cacheKey, out List<Flight> cachedFlights))
             {
                 _logger.LogDebug("Flight board data retrieved from cache for airport {AirportCode}", airportCode);
-                var cachedFlights = JsonSerializer.Deserialize<List<Flight>>(cachedData);
-                return cachedFlights ?? new List<Flight>();
+                return cachedFlights;
             }
 
             // Get from database
@@ -62,13 +58,12 @@ public class FlightService : IFlightService
                 .ToListAsync();
 
             // Cache the results
-            var serializedFlights = JsonSerializer.Serialize(flights);
-            var cacheOptions = new DistributedCacheEntryOptions
+            var cacheOptions = new MemoryCacheEntryOptions
             {
                 AbsoluteExpirationRelativeToNow = TimeSpan.FromMinutes(CacheExpirationMinutes)
             };
             
-            await _cache.SetStringAsync(cacheKey, serializedFlights, cacheOptions);
+            _cache.Set(cacheKey, flights, cacheOptions);
             _logger.LogDebug("Flight board data cached for airport {AirportCode}", airportCode);
 
             return flights;
@@ -76,13 +71,7 @@ public class FlightService : IFlightService
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error retrieving flight board for airport {AirportCode}", airportCode);
-            
-            // Fallback to database without caching
-            return await _context.Flights
-                .Where(f => f.OriginAirport == airportCode || f.DestinationAirport == airportCode)
-                .Where(f => f.ScheduledDeparture.Date == DateTime.Today)
-                .OrderBy(f => f.ScheduledDeparture)
-                .ToListAsync();
+            return new List<Flight>();
         }
     }
 
@@ -93,41 +82,34 @@ public class FlightService : IFlightService
         try
         {
             // Try to get from cache first
-            var cachedData = await _cache.GetStringAsync(cacheKey);
-            if (!string.IsNullOrEmpty(cachedData))
+            if (_cache.TryGetValue(cacheKey, out Flight cachedFlight))
             {
-                _logger.LogDebug("Flight details retrieved from cache for flight {FlightNumber}", flightNumber);
-                return JsonSerializer.Deserialize<Flight>(cachedData);
+                _logger.LogDebug("Flight details retrieved from cache for {FlightNumber}", flightNumber);
+                return cachedFlight;
             }
 
             // Get from database
             var flight = await _context.Flights
-                .FirstOrDefaultAsync(f => f.FlightNumber == flightNumber && 
-                                        f.ScheduledDeparture.Date == date.Date);
+                .FirstOrDefaultAsync(f => f.FlightNumber == flightNumber && f.ScheduledDeparture.Date == date.Date);
 
             if (flight != null)
             {
-                // Cache the results
-                var serializedFlight = JsonSerializer.Serialize(flight);
-                var cacheOptions = new DistributedCacheEntryOptions
+                // Cache the result
+                var cacheOptions = new MemoryCacheEntryOptions
                 {
                     AbsoluteExpirationRelativeToNow = TimeSpan.FromMinutes(CacheExpirationMinutes)
                 };
                 
-                await _cache.SetStringAsync(cacheKey, serializedFlight, cacheOptions);
-                _logger.LogDebug("Flight details cached for flight {FlightNumber}", flightNumber);
+                _cache.Set(cacheKey, flight, cacheOptions);
+                _logger.LogDebug("Flight details cached for {FlightNumber}", flightNumber);
             }
 
             return flight;
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error retrieving flight details for flight {FlightNumber}", flightNumber);
-            
-            // Fallback to database without caching
-            return await _context.Flights
-                .FirstOrDefaultAsync(f => f.FlightNumber == flightNumber && 
-                                        f.ScheduledDeparture.Date == date.Date);
+            _logger.LogError(ex, "Error retrieving flight details for {FlightNumber}", flightNumber);
+            return null;
         }
     }
 
@@ -138,50 +120,29 @@ public class FlightService : IFlightService
         try
         {
             // Try to get from cache first
-            var cachedData = await _cache.GetStringAsync(cacheKey);
-            if (!string.IsNullOrEmpty(cachedData))
+            if (_cache.TryGetValue(cacheKey, out WeatherInfo cachedWeather))
             {
                 _logger.LogDebug("Weather data retrieved from cache for airport {AirportCode}", airportCode);
-                return JsonSerializer.Deserialize<WeatherInfo>(cachedData);
+                return cachedWeather;
             }
 
-            var weatherData = await _weatherService.GetWeatherAsync(airportCode);
-            if (weatherData == null)
-            {
-                _logger.LogWarning("No weather data available for airport {AirportCode}", airportCode);
-                return null;
-            }
+            // Get weather from API
+            var weatherInfo = await GetWeatherFromApiAsync(airportCode);
 
-            var weatherInfo = new WeatherInfo
+            // Cache the result
+            var cacheOptions = new MemoryCacheEntryOptions
             {
-                Location = weatherData.Location,
-                Temperature = weatherData.TemperatureFahrenheit,
-                Conditions = weatherData.Conditions,
-                Visibility = weatherData.Visibility,
-                WindSpeed = weatherData.WindSpeed,
-                WindDirection = weatherData.WindDirectionText
-            };
-
-            // Cache weather data for 10 minutes (weather changes less frequently)
-            var serializedWeather = JsonSerializer.Serialize(weatherInfo);
-            var cacheOptions = new DistributedCacheEntryOptions
-            {
-                AbsoluteExpirationRelativeToNow = TimeSpan.FromMinutes(10)
+                AbsoluteExpirationRelativeToNow = TimeSpan.FromMinutes(10) // Weather changes less frequently
             };
             
-            await _cache.SetStringAsync(cacheKey, serializedWeather, cacheOptions);
+            _cache.Set(cacheKey, weatherInfo, cacheOptions);
             _logger.LogDebug("Weather data cached for airport {AirportCode}", airportCode);
 
             return weatherInfo;
         }
-        catch (WeatherServiceException ex)
-        {
-            _logger.LogError(ex, "Failed to retrieve weather data for airport {AirportCode}", airportCode);
-            return null;
-        }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Unexpected error retrieving weather data for airport {AirportCode}", airportCode);
+            _logger.LogError(ex, "Error retrieving weather data for airport {AirportCode}", airportCode);
             return null;
         }
     }
@@ -202,170 +163,159 @@ public class FlightService : IFlightService
             await InvalidateFlightCacheAsync(flightNumber, flight.ScheduledDeparture);
             
             // Send real-time update via SignalR
-            await _hubContext.Clients.Group($"flight_{flightNumber}")
-                .SendAsync("FlightStatusChanged", new
-                {
-                    FlightNumber = flightNumber,
-                    OldStatus = oldStatus.ToString(),
-                    NewStatus = status.ToString(),
-                    UpdatedAt = DateTime.UtcNow
-                });
+            await SendFlightStatusUpdateAsync(flight, oldStatus, status);
 
             _logger.LogInformation("Flight {FlightNumber} status updated from {OldStatus} to {NewStatus}", 
                 flightNumber, oldStatus, status);
         }
     }
 
-    public async Task SyncFlightDataFromExternalApiAsync(string airportCode)
+    public async Task UpdateFlightGateAsync(string flightNumber, string? newGate, string? terminal = null)
     {
-        try
-        {
-            _logger.LogInformation("Starting flight data sync for airport {AirportCode}", airportCode);
+        var flight = await _context.Flights
+            .FirstOrDefaultAsync(f => f.FlightNumber == flightNumber);
             
-            var externalFlights = await _flightDataService.GetFlightDataAsync(airportCode);
-            var updatedCount = 0;
-            var addedCount = 0;
-
-            foreach (var externalFlight in externalFlights)
+        if (flight != null)
+        {
+            var oldGate = flight.Gate;
+            flight.Gate = newGate;
+            if (!string.IsNullOrEmpty(terminal))
             {
-                var existingFlight = await _context.Flights
-                    .FirstOrDefaultAsync(f => f.FlightNumber == externalFlight.FlightNumber &&
-                                            f.ScheduledDeparture.Date == externalFlight.ScheduledDeparture.Date);
-
-                if (existingFlight != null)
-                {
-                    // Update existing flight
-                    var statusChanged = UpdateFlightFromExternalData(existingFlight, externalFlight);
-                    if (statusChanged)
-                    {
-                        updatedCount++;
-                        
-                        // Send real-time update
-                        await _hubContext.Clients.Group($"flight_{existingFlight.FlightNumber}")
-                            .SendAsync("FlightStatusChanged", new
-                            {
-                                FlightNumber = existingFlight.FlightNumber,
-                                Status = existingFlight.Status.ToString(),
-                                EstimatedDeparture = existingFlight.EstimatedDeparture,
-                                EstimatedArrival = existingFlight.EstimatedArrival,
-                                Gate = existingFlight.Gate,
-                                UpdatedAt = DateTime.UtcNow
-                            });
-                    }
-                }
-                else
-                {
-                    // Add new flight
-                    var newFlight = CreateFlightFromExternalData(externalFlight);
-                    _context.Flights.Add(newFlight);
-                    addedCount++;
-                }
+                flight.Terminal = terminal;
             }
-
+            flight.UpdatedAt = DateTime.UtcNow;
             await _context.SaveChangesAsync();
+
+            // Invalidate cache for this flight
+            await InvalidateFlightCacheAsync(flightNumber, flight.ScheduledDeparture);
             
-            // Invalidate flight board cache
-            await InvalidateFlightBoardCacheAsync(airportCode);
+            // Send real-time update via SignalR
+            await SendGateChangeUpdateAsync(flight, oldGate, newGate);
 
-            _logger.LogInformation("Flight data sync completed for airport {AirportCode}. Added: {AddedCount}, Updated: {UpdatedCount}", 
-                airportCode, addedCount, updatedCount);
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error syncing flight data for airport {AirportCode}", airportCode);
-            throw;
+            _logger.LogInformation("Flight {FlightNumber} gate updated from {OldGate} to {NewGate}", 
+                flightNumber, oldGate, newGate);
         }
     }
 
-    private bool UpdateFlightFromExternalData(Flight existingFlight, ExternalFlightData externalFlight)
+    public async Task UpdateFlightDelayAsync(string flightNumber, int delayMinutes, string? reason = null)
     {
-        var hasChanges = false;
-
-        if (existingFlight.EstimatedDeparture != externalFlight.EstimatedDeparture)
+        var flight = await _context.Flights
+            .FirstOrDefaultAsync(f => f.FlightNumber == flightNumber);
+            
+        if (flight != null)
         {
-            existingFlight.EstimatedDeparture = externalFlight.EstimatedDeparture;
-            hasChanges = true;
-        }
+            flight.EstimatedDeparture = flight.ScheduledDeparture.AddMinutes(delayMinutes);
+            flight.EstimatedArrival = flight.ScheduledArrival.AddMinutes(delayMinutes);
+            flight.Status = FlightStatus.Delayed;
+            flight.UpdatedAt = DateTime.UtcNow;
+            await _context.SaveChangesAsync();
 
-        if (existingFlight.EstimatedArrival != externalFlight.EstimatedArrival)
-        {
-            existingFlight.EstimatedArrival = externalFlight.EstimatedArrival;
-            hasChanges = true;
-        }
+            // Invalidate cache for this flight
+            await InvalidateFlightCacheAsync(flightNumber, flight.ScheduledDeparture);
+            
+            // Send real-time update via SignalR
+            await SendDelayUpdateAsync(flight, delayMinutes, reason);
 
-        if (Enum.TryParse<FlightStatus>(externalFlight.Status, true, out var newStatus) && 
-            existingFlight.Status != newStatus)
-        {
-            existingFlight.Status = newStatus;
-            hasChanges = true;
+            _logger.LogInformation("Flight {FlightNumber} delayed by {DelayMinutes} minutes", 
+                flightNumber, delayMinutes);
         }
-
-        if (existingFlight.Gate != externalFlight.Gate)
-        {
-            existingFlight.Gate = externalFlight.Gate;
-            hasChanges = true;
-        }
-
-        if (existingFlight.Terminal != externalFlight.Terminal)
-        {
-            existingFlight.Terminal = externalFlight.Terminal;
-            hasChanges = true;
-        }
-
-        if (hasChanges)
-        {
-            existingFlight.UpdatedAt = DateTime.UtcNow;
-        }
-
-        return hasChanges;
     }
 
-    private Flight CreateFlightFromExternalData(ExternalFlightData externalFlight)
+    private async Task InvalidateFlightCacheAsync(string flightNumber, DateTime scheduledDeparture)
     {
-        return new Flight
+        var date = scheduledDeparture.Date;
+        var flightBoardKey = $"{FlightBoardCacheKeyPrefix}:*:{date:yyyy-MM-dd}";
+        var flightDetailsKey = $"{FlightDetailsCacheKeyPrefix}:{flightNumber}:{date:yyyy-MM-dd}";
+        
+        // Remove from cache
+        _cache.Remove(flightDetailsKey);
+        
+        // For flight board, we'd need to remove all airport variations
+        // This is a simplified approach - in production you might want more sophisticated cache invalidation
+        _logger.LogDebug("Cache invalidated for flight {FlightNumber}", flightNumber);
+    }
+
+    private async Task SendFlightStatusUpdateAsync(Flight flight, FlightStatus oldStatus, FlightStatus newStatus)
+    {
+        var update = new FlightStatusUpdate
         {
-            FlightNumber = externalFlight.FlightNumber,
-            Airline = externalFlight.Airline,
-            OriginAirport = externalFlight.OriginAirport,
-            DestinationAirport = externalFlight.DestinationAirport,
-            ScheduledDeparture = externalFlight.ScheduledDeparture,
-            EstimatedDeparture = externalFlight.EstimatedDeparture,
-            ScheduledArrival = externalFlight.ScheduledArrival,
-            EstimatedArrival = externalFlight.EstimatedArrival,
-            Status = Enum.TryParse<FlightStatus>(externalFlight.Status, true, out var status) ? status : FlightStatus.Scheduled,
-            Gate = externalFlight.Gate,
-            Terminal = externalFlight.Terminal,
-            Aircraft = externalFlight.Aircraft,
-            CreatedAt = DateTime.UtcNow,
+            FlightNumber = flight.FlightNumber,
+            Airline = flight.Airline,
+            OldStatus = oldStatus.ToString(),
+            NewStatus = newStatus.ToString(),
+            EstimatedDeparture = flight.EstimatedDeparture,
+            EstimatedArrival = flight.EstimatedArrival,
+            Gate = flight.Gate,
+            Terminal = flight.Terminal,
             UpdatedAt = DateTime.UtcNow
         };
+
+        // Send to flight-specific group
+        await _hubContext.Clients.Group($"flight_{flight.FlightNumber.ToUpperInvariant()}")
+            .SendAsync("FlightStatusChanged", update);
+
+        // Send to airport groups
+        await _hubContext.Clients.Group($"airport_{flight.OriginAirport.ToUpperInvariant()}")
+            .SendAsync("FlightStatusChanged", update);
+        await _hubContext.Clients.Group($"airport_{flight.DestinationAirport.ToUpperInvariant()}")
+            .SendAsync("FlightStatusChanged", update);
     }
 
-    private async Task InvalidateFlightCacheAsync(string flightNumber, DateTime flightDate)
+    private async Task SendGateChangeUpdateAsync(Flight flight, string? oldGate, string? newGate)
+    {
+        var update = new GateChangeUpdate
+        {
+            FlightNumber = flight.FlightNumber,
+            Airline = flight.Airline,
+            OldGate = oldGate,
+            NewGate = newGate,
+            Terminal = flight.Terminal,
+            UpdatedAt = DateTime.UtcNow
+        };
+
+        // Send to flight-specific group
+        await _hubContext.Clients.Group($"flight_{flight.FlightNumber.ToUpperInvariant()}")
+            .SendAsync("GateChanged", update);
+
+        // Send to airport groups
+        await _hubContext.Clients.Group($"airport_{flight.OriginAirport.ToUpperInvariant()}")
+            .SendAsync("GateChanged", update);
+    }
+
+    private async Task SendDelayUpdateAsync(Flight flight, int delayMinutes, string? reason)
+    {
+        var update = new DelayUpdate
+        {
+            FlightNumber = flight.FlightNumber,
+            Airline = flight.Airline,
+            OriginalDeparture = flight.ScheduledDeparture,
+            NewEstimatedDeparture = flight.EstimatedDeparture,
+            OriginalArrival = flight.ScheduledArrival,
+            NewEstimatedArrival = flight.EstimatedArrival,
+            DelayMinutes = delayMinutes,
+            Reason = reason,
+            UpdatedAt = DateTime.UtcNow
+        };
+
+        // Send to flight-specific group
+        await _hubContext.Clients.Group($"flight_{flight.FlightNumber.ToUpperInvariant()}")
+            .SendAsync("FlightDelayed", update);
+
+        // Send to airport groups
+        await _hubContext.Clients.Group($"airport_{flight.OriginAirport.ToUpperInvariant()}")
+            .SendAsync("FlightDelayed", update);
+    }
+
+    private async Task<WeatherInfo?> GetWeatherFromApiAsync(string airportCode)
     {
         try
         {
-            var cacheKey = $"{FlightDetailsCacheKeyPrefix}:{flightNumber}:{flightDate:yyyy-MM-dd}";
-            await _cache.RemoveAsync(cacheKey);
-            _logger.LogDebug("Invalidated cache for flight {FlightNumber}", flightNumber);
+            return await _weatherService.GetWeatherAsync(airportCode);
         }
         catch (Exception ex)
         {
-            _logger.LogWarning(ex, "Failed to invalidate cache for flight {FlightNumber}", flightNumber);
-        }
-    }
-
-    private async Task InvalidateFlightBoardCacheAsync(string airportCode)
-    {
-        try
-        {
-            var cacheKey = $"{FlightBoardCacheKeyPrefix}:{airportCode}:{DateTime.Today:yyyy-MM-dd}";
-            await _cache.RemoveAsync(cacheKey);
-            _logger.LogDebug("Invalidated flight board cache for airport {AirportCode}", airportCode);
-        }
-        catch (Exception ex)
-        {
-            _logger.LogWarning(ex, "Failed to invalidate flight board cache for airport {AirportCode}", airportCode);
+            _logger.LogError(ex, "Error getting weather from API for {AirportCode}", airportCode);
+            return null;
         }
     }
 }

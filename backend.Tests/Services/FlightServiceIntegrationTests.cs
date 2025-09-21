@@ -28,10 +28,16 @@ public class FlightServiceIntegrationTests : IDisposable
         _mockWeatherService = new Mock<IWeatherService>();
         _mockLogger = new Mock<ILogger<FlightService>>();
 
+        // Add missing mocks for the updated constructor
+        var mockCache = new Mock<Microsoft.Extensions.Caching.Distributed.IDistributedCache>();
+        var mockHubContext = new Mock<Microsoft.AspNetCore.SignalR.IHubContext<AirlineSimulationApi.Hubs.FlightUpdatesHub>>();
+
         _flightService = new FlightService(
             _context,
             _mockFlightDataService.Object,
             _mockWeatherService.Object,
+            mockCache.Object,
+            mockHubContext.Object,
             _mockLogger.Object);
     }
 

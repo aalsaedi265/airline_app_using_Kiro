@@ -7,7 +7,6 @@ const Register: React.FC = () => {
     firstName: '',
     lastName: '',
     email: '',
-    phoneNumber: '',
     password: '',
     confirmPassword: ''
   });
@@ -39,9 +38,7 @@ const Register: React.FC = () => {
       const success = await register({
         firstName: formData.firstName,
         lastName: formData.lastName,
-        email: formData.email,
-        phoneNumber: formData.phoneNumber,
-        password: formData.password
+        email: formData.email
       });
       
       if (success) {
@@ -92,17 +89,6 @@ const Register: React.FC = () => {
               id="email"
               name="email"
               value={formData.email}
-              onChange={handleChange}
-              required
-            />
-          </div>
-          <div className="form-group">
-            <label htmlFor="phoneNumber">Phone Number</label>
-            <input
-              type="tel"
-              id="phoneNumber"
-              name="phoneNumber"
-              value={formData.phoneNumber}
               onChange={handleChange}
               required
             />
