@@ -7,10 +7,20 @@ namespace AirlineSimulationApi.Services;
 public class FlightService : IFlightService
 {
     private readonly ApplicationDbContext _context;
+    private readonly IFlightDataService _flightDataService;
+    private readonly IWeatherService _weatherService;
+    private readonly ILogger<FlightService> _logger;
 
-    public FlightService(ApplicationDbContext context)
+    public FlightService(
+        ApplicationDbContext context,
+        IFlightDataService flightDataService,
+        IWeatherService weatherService,
+        ILogger<FlightService> logger)
     {
         _context = context;
+        _flightDataService = flightDataService;
+        _weatherService = weatherService;
+        _logger = logger;
     }
 
     public async Task<IEnumerable<Flight>> GetFlightBoardAsync(string airportCode)
@@ -31,17 +41,30 @@ public class FlightService : IFlightService
 
     public async Task<WeatherInfo?> GetWeatherAsync(string airportCode)
     {
-        // Placeholder implementation - will be replaced with actual API integration
-        await Task.Delay(100);
-        return new WeatherInfo
+        try
         {
-            Location = airportCode,
-            Temperature = 72.0,
-            Conditions = "Clear",
-            Visibility = 10.0,
-            WindSpeed = 5.0,
-            WindDirection = "NW"
-        };
+            var weatherData = await _weatherService.GetWeatherAsync(airportCode);
+            if (weatherData == null)
+            {
+                _logger.LogWarning("No weather data available for airport {AirportCode}", airportCode);
+                return null;
+            }
+
+            return new WeatherInfo
+            {
+                Location = weatherData.Location,
+                Temperature = weatherData.TemperatureFahrenheit,
+                Conditions = weatherData.Conditions,
+                Visibility = weatherData.Visibility,
+                WindSpeed = weatherData.WindSpeed,
+                WindDirection = weatherData.WindDirectionText
+            };
+        }
+        catch (WeatherServiceException ex)
+        {
+            _logger.LogError(ex, "Failed to retrieve weather data for airport {AirportCode}", airportCode);
+            return null;
+        }
     }
 
     public async Task UpdateFlightStatusAsync(string flightNumber, FlightStatus status)

@@ -17,13 +17,12 @@ builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
-// Database configuration - use environment variable for password
+// Database configuration - substitute environment variables
 var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
-var postgresPassword = Environment.GetEnvironmentVariable("POSTGRES_PASSWORD");
-if (!string.IsNullOrEmpty(postgresPassword))
-{
-    connectionString = connectionString.Replace("Password=placeholder", $"Password={postgresPassword}");
-}
+connectionString = connectionString
+    .Replace("${POSTGRES_DB}", Environment.GetEnvironmentVariable("POSTGRES_DB") ?? "AirlineSimulationDb")
+    .Replace("${POSTGRES_USER}", Environment.GetEnvironmentVariable("POSTGRES_USER") ?? "postgres")
+    .Replace("${POSTGRES_PASSWORD}", Environment.GetEnvironmentVariable("POSTGRES_PASSWORD") ?? "postgres");
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
     options.UseNpgsql(connectionString));
 
@@ -34,7 +33,8 @@ builder.Services.AddIdentity<ApplicationUser, IdentityRole>()
 
 // JWT Authentication
 var jwtSettings = builder.Configuration.GetSection("JwtSettings");
-var key = Encoding.ASCII.GetBytes(jwtSettings["Secret"] ?? "your-secret-key-here");
+var jwtSecret = jwtSettings["Secret"]?.Replace("${JWT_SECRET}", Environment.GetEnvironmentVariable("JWT_SECRET") ?? "fallback-secret-key");
+var key = Encoding.ASCII.GetBytes(jwtSecret ?? "your-secret-key-here");
 
 builder.Services.AddAuthentication(options =>
 {
@@ -82,6 +82,19 @@ builder.Services.AddCors(options =>
               .AllowAnyMethod()
               .AllowCredentials();
     });
+});
+
+// HTTP Clients for external APIs
+builder.Services.AddHttpClient<IFlightDataService, AviationStackService>(client =>
+{
+    client.BaseAddress = new Uri("https://api.aviationstack.com/v1/");
+    client.Timeout = TimeSpan.FromSeconds(30);
+});
+
+builder.Services.AddHttpClient<IWeatherService, OpenWeatherMapService>(client =>
+{
+    client.BaseAddress = new Uri("https://api.openweathermap.org/data/2.5/");
+    client.Timeout = TimeSpan.FromSeconds(30);
 });
 
 // Application services
