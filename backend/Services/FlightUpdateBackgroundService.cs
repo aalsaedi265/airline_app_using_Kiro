@@ -1,4 +1,5 @@
 using AirlineSimulationApi.Services;
+using AirlineSimulationApi.Models;
 
 namespace AirlineSimulationApi.Services;
 
@@ -108,5 +109,4 @@ public class FlightUpdateBackgroundService : BackgroundService
         var random = new Random();
         return statuses[random.Next(statuses.Length)];
     }
-}
 }

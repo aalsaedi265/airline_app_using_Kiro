@@ -39,22 +39,22 @@ const SeatMap: React.FC<SeatMapProps> = ({
   };
 
   const handleSeatClick = (seat: Seat) => {
-    if (seat.IsAvailable) {
-      onSeatSelect(seat.Number);
+    if (seat.isAvailable) {
+      onSeatSelect(seat.number);
     }
   };
 
   const getSeatClass = (seat: Seat) => {
-    if (!seat.IsAvailable) return 'seat-unavailable';
-    if (selectedSeats.includes(seat.Number)) return 'seat-selected';
-    if (seat.Class.toLowerCase() === seatClass.toLowerCase()) return 'seat-available';
+    if (!seat.isAvailable) return 'seat-unavailable';
+    if (selectedSeats.includes(seat.number)) return 'seat-selected';
+    if (seat.class.toLowerCase() === seatClass.toLowerCase()) return 'seat-available';
     return 'seat-other-class';
   };
 
   const getSeatLabel = (seat: Seat) => {
-    if (!seat.IsAvailable) return 'X';
-    if (selectedSeats.includes(seat.Number)) return '✓';
-    return seat.Number;
+    if (!seat.isAvailable) return 'X';
+    if (selectedSeats.includes(seat.number)) return '✓';
+    return seat.number;
   };
 
   if (loading) {

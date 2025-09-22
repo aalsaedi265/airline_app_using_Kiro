@@ -71,4 +71,3 @@ public class Seat
     public SeatClass Class { get; set; }
     public bool IsAvailable { get; set; }
 }
-}

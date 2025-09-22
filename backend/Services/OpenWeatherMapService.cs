@@ -44,7 +44,9 @@ public class OpenWeatherMapService : IWeatherService
     {
         _httpClient = httpClient;
         _logger = logger;
-        _apiKey = configuration["OpenWeatherMap:ApiKey"] ?? throw new InvalidOperationException("OpenWeatherMap API key not configured");
+        _apiKey = Environment.GetEnvironmentVariable("OPENWEATHER_API_KEY") ?? 
+                  configuration["OpenWeatherMap:ApiKey"] ?? 
+                  throw new InvalidOperationException("OpenWeatherMap API key not configured");
         
         // Configure retry policy with exponential backoff
         _retryPolicy = Policy

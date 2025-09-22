@@ -8,7 +8,7 @@ const Home: React.FC = () => {
   return (
     <div className="home">
       <div className="hero">
-        <h1>Welcome to Airline Simulation</h1>
+        <h1>🏙️ Chicago O'Hare International Airport 🏙️</h1>
         <p>Your comprehensive flight management and booking platform</p>
         {!user && (
           <div className="cta-buttons">
@@ -23,26 +23,26 @@ const Home: React.FC = () => {
       </div>
       
       <div className="features">
-        <h2>Features</h2>
+        <h2>✈️ Airport Services</h2>
         <div className="feature-grid">
           <div className="feature-card">
-            <h3>Real-time Flight Board</h3>
+            <h3>📊 Real-time Flight Board</h3>
             <p>Track live flight information with real-time updates</p>
             <Link to="/flights" className="btn btn-primary">
               View Flights
             </Link>
           </div>
           <div className="feature-card">
-            <h3>Flight Booking</h3>
-            <p>Book flights directly from the flight board</p>
+            <h3>🎫 Flight Booking</h3>
+            <p>Book flights directly from our comprehensive platform</p>
           </div>
           <div className="feature-card">
-            <h3>Check-in Services</h3>
-            <p>Complete online check-in and get boarding passes</p>
+            <h3>📋 Check-in Services</h3>
+            <p>Complete online check-in and receive boarding passes</p>
           </div>
           <div className="feature-card">
-            <h3>Notifications</h3>
-            <p>Receive real-time updates about your flights</p>
+            <h3>📱 Flight Notifications</h3>
+            <p>Receive real-time updates about your flight status</p>
           </div>
         </div>
       </div>

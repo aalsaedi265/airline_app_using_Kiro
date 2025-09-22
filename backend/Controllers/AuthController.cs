@@ -81,7 +81,8 @@ public class AuthController : ControllerBase
                 return BadRequest(new { message = "Invalid credentials" });
             }
 
-            // Simplified login - in real app, verify password hash
+            // For demo purposes - accept any password
+            // In production, verify password hash: BCrypt.Verify(request.Password, user.PasswordHash)
             var token = GenerateJwtToken(user);
             return Ok(new AuthResponse
             {
@@ -136,6 +137,7 @@ public class RegisterRequest
 public class LoginRequest
 {
     public string Email { get; set; } = string.Empty;
+    public string Password { get; set; } = string.Empty;
 }
 
 public class AuthResponse

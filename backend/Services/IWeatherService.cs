@@ -7,21 +7,6 @@ public interface IWeatherService
     Task<bool> IsServiceAvailableAsync();
 }
 
-public class WeatherData
-{
-    public string Location { get; set; } = string.Empty;
-    public double Temperature { get; set; }
-    public double TemperatureFahrenheit => (Temperature * 9 / 5) + 32;
-    public string Conditions { get; set; } = string.Empty;
-    public string Description { get; set; } = string.Empty;
-    public double Humidity { get; set; }
-    public double Pressure { get; set; }
-    public double Visibility { get; set; }
-    public double WindSpeed { get; set; }
-    public int WindDirection { get; set; }
-    public string WindDirectionText { get; set; } = string.Empty;
-    public DateTime LastUpdated { get; set; }
-}
 
 public class WeatherServiceException : Exception
 {

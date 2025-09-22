@@ -31,7 +31,6 @@ public class BaggageService : IBaggageService
             var baggage = await _context.BaggageItems
                 .Include(b => b.Booking)
                 .ThenInclude(booking => booking.Flight)
-                .Include(b => b.Passenger)
                 .FirstOrDefaultAsync(b => b.TrackingNumber == trackingNumber);
 
             if (baggage == null)
@@ -49,12 +48,12 @@ public class BaggageService : IBaggageService
                 Baggage = new BaggageInfo
                 {
                     TrackingNumber = baggage.TrackingNumber,
-                    Description = baggage.Description,
+                    Description = baggage.Type.ToString(),
                     Status = baggage.Status.ToString(),
                     CurrentLocation = GetLocationByStatus(baggage.Status),
-                    LastUpdated = baggage.UpdatedAt,
+                    LastUpdated = baggage.CreatedAt,
                     FlightNumber = baggage.Booking.Flight.FlightNumber,
-                    PassengerName = $"{baggage.Passenger.FirstName} {baggage.Passenger.LastName}",
+                    PassengerName = "Passenger", // Simplified for demo
                     Weight = baggage.Weight,
                     StatusHistory = GenerateStatusHistory(baggage.Status)
                 }
@@ -85,12 +84,10 @@ public class BaggageService : IBaggageService
             {
                 TrackingNumber = trackingNumber,
                 BookingId = bookingId,
-                PassengerId = passengerId,
-                Description = description,
-                Status = BaggageStatus.Checked,
+                Type = BaggageType.Checked,
+                Status = BaggageStatus.CheckedIn,
                 Weight = new Random().Next(15, 50), // Random weight between 15-50 lbs
-                CreatedAt = DateTime.UtcNow,
-                UpdatedAt = DateTime.UtcNow
+                CreatedAt = DateTime.UtcNow
             };
 
             _context.BaggageItems.Add(baggage);
@@ -152,7 +149,6 @@ public class BaggageService : IBaggageService
             }
 
             baggage.Status = newStatus;
-            baggage.UpdatedAt = DateTime.UtcNow;
             await _context.SaveChangesAsync();
 
             _logger.LogInformation("Baggage status updated successfully for {TrackingNumber}", trackingNumber);
@@ -163,7 +159,7 @@ public class BaggageService : IBaggageService
                 Baggage = new BaggageInfo
                 {
                     TrackingNumber = trackingNumber,
-                    Description = baggage.Description,
+                    Description = baggage.Type.ToString(),
                     Status = newStatus.ToString(),
                     CurrentLocation = GetLocationByStatus(newStatus),
                     LastUpdated = DateTime.UtcNow,
@@ -201,12 +197,11 @@ public class BaggageService : IBaggageService
     {
         return status switch
         {
-            BaggageStatus.Checked => "Check-in Counter",
+            BaggageStatus.CheckedIn => "Check-in Counter",
             BaggageStatus.InTransit => "In Transit to Aircraft",
             BaggageStatus.Loaded => "Loaded on Aircraft",
-            BaggageStatus.Arrived => "Arrived at Destination",
             BaggageStatus.Delivered => "Delivered to Baggage Claim",
-            BaggageStatus.Delayed => "Delayed - Under Investigation",
+            BaggageStatus.Lost => "Lost - Under Investigation",
             _ => "Unknown Location"
         };
     }
@@ -219,10 +214,9 @@ public class BaggageService : IBaggageService
 
         var statuses = new[]
         {
-            (BaggageStatus.Checked, "Checked in at airport"),
+            (BaggageStatus.CheckedIn, "Checked in at airport"),
             (BaggageStatus.InTransit, "Transferred to aircraft loading area"),
             (BaggageStatus.Loaded, "Loaded onto aircraft"),
-            (BaggageStatus.Arrived, "Arrived at destination airport"),
             (BaggageStatus.Delivered, "Delivered to baggage claim area")
         };
 

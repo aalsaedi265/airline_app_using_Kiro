@@ -50,10 +50,80 @@ public class FlightService : IFlightService
                 return cachedFlights;
             }
 
+            // Try to get from external API first
+            try
+            {
+                var externalFlights = await _flightDataService.GetFlightDataAsync(airportCode);
+                if (externalFlights != null && externalFlights.Any())
+                {
+                    // Convert external data to Flight objects and save to database
+                    foreach (var externalFlight in externalFlights)
+                    {
+                        var utcScheduledDeparture = externalFlight.ScheduledDeparture.Kind == DateTimeKind.Utc 
+                            ? externalFlight.ScheduledDeparture 
+                            : DateTime.SpecifyKind(externalFlight.ScheduledDeparture, DateTimeKind.Utc);
+                        
+                        var existingFlight = await _context.Flights
+                            .FirstOrDefaultAsync(f => f.FlightNumber == externalFlight.FlightNumber && 
+                                                     f.ScheduledDeparture.Date == utcScheduledDeparture.Date);
+                        
+                        if (existingFlight == null)
+                        {
+                            var flight = new Flight
+                            {
+                                FlightNumber = externalFlight.FlightNumber,
+                                Airline = externalFlight.Airline,
+                                OriginAirport = externalFlight.OriginAirport,
+                                DestinationAirport = externalFlight.DestinationAirport,
+                                ScheduledDeparture = externalFlight.ScheduledDeparture.Kind == DateTimeKind.Utc 
+                                    ? externalFlight.ScheduledDeparture 
+                                    : DateTime.SpecifyKind(externalFlight.ScheduledDeparture, DateTimeKind.Utc),
+                                EstimatedDeparture = externalFlight.EstimatedDeparture?.Kind == DateTimeKind.Utc 
+                                    ? externalFlight.EstimatedDeparture 
+                                    : externalFlight.EstimatedDeparture.HasValue 
+                                        ? DateTime.SpecifyKind(externalFlight.EstimatedDeparture.Value, DateTimeKind.Utc)
+                                        : null,
+                                ScheduledArrival = externalFlight.ScheduledArrival.Kind == DateTimeKind.Utc 
+                                    ? externalFlight.ScheduledArrival 
+                                    : DateTime.SpecifyKind(externalFlight.ScheduledArrival, DateTimeKind.Utc),
+                                EstimatedArrival = externalFlight.EstimatedArrival?.Kind == DateTimeKind.Utc 
+                                    ? externalFlight.EstimatedArrival 
+                                    : externalFlight.EstimatedArrival.HasValue 
+                                        ? DateTime.SpecifyKind(externalFlight.EstimatedArrival.Value, DateTimeKind.Utc)
+                                        : null,
+                                Status = MapExternalStatusToFlightStatus(externalFlight.Status),
+                                Gate = externalFlight.Gate,
+                                Terminal = externalFlight.Terminal,
+                                Aircraft = externalFlight.Aircraft,
+                                CreatedAt = DateTime.UtcNow,
+                                UpdatedAt = DateTime.UtcNow
+                            };
+                            _context.Flights.Add(flight);
+                        }
+                        else
+                        {
+                            // Update existing flight with latest data
+                            existingFlight.Status = MapExternalStatusToFlightStatus(externalFlight.Status);
+                            existingFlight.Gate = externalFlight.Gate;
+                            existingFlight.Terminal = externalFlight.Terminal;
+                            existingFlight.EstimatedDeparture = externalFlight.EstimatedDeparture;
+                            existingFlight.EstimatedArrival = externalFlight.EstimatedArrival;
+                            existingFlight.UpdatedAt = DateTime.UtcNow;
+                        }
+                    }
+                    await _context.SaveChangesAsync();
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogWarning(ex, "Failed to fetch external flight data for {AirportCode}, using database data", airportCode);
+            }
+
             // Get from database
+            var today = DateTime.UtcNow.Date;
             var flights = await _context.Flights
                 .Where(f => f.OriginAirport == airportCode || f.DestinationAirport == airportCode)
-                .Where(f => f.ScheduledDeparture.Date == DateTime.Today)
+                .Where(f => f.ScheduledDeparture.Date == today)
                 .OrderBy(f => f.ScheduledDeparture)
                 .ToListAsync();
 
@@ -127,7 +197,16 @@ public class FlightService : IFlightService
             }
 
             // Get weather from API
-            var weatherInfo = await GetWeatherFromApiAsync(airportCode);
+            var weatherData = await GetWeatherFromApiAsync(airportCode);
+            var weatherInfo = weatherData != null ? new WeatherInfo
+            {
+                Location = airportCode,
+                Temperature = weatherData.Temperature,
+                Conditions = weatherData.Conditions,
+                Visibility = weatherData.Visibility,
+                WindSpeed = weatherData.WindSpeed,
+                WindDirection = weatherData.WindDirectionText
+            } : null;
 
             // Cache the result
             var cacheOptions = new MemoryCacheEntryOptions
@@ -306,11 +385,19 @@ public class FlightService : IFlightService
             .SendAsync("FlightDelayed", update);
     }
 
-    private async Task<WeatherInfo?> GetWeatherFromApiAsync(string airportCode)
+    private async Task<WeatherData?> GetWeatherFromApiAsync(string airportCode)
     {
         try
         {
-            return await _weatherService.GetWeatherAsync(airportCode);
+            var weatherInfo = await _weatherService.GetWeatherAsync(airportCode);
+            return weatherInfo != null ? new WeatherData
+            {
+                Temperature = weatherInfo.Temperature,
+                Conditions = weatherInfo.Conditions,
+                Visibility = weatherInfo.Visibility,
+                WindSpeed = weatherInfo.WindSpeed,
+                WindDirection = weatherInfo.WindDirection
+            } : null;
         }
         catch (Exception ex)
         {
@@ -318,4 +405,34 @@ public class FlightService : IFlightService
             return null;
         }
     }
+
+    private static FlightStatus MapExternalStatusToFlightStatus(string externalStatus)
+    {
+        return externalStatus.ToLowerInvariant() switch
+        {
+            "scheduled" or "active" => FlightStatus.OnTime,
+            "delayed" => FlightStatus.Delayed,
+            "cancelled" or "canceled" => FlightStatus.Cancelled,
+            "boarding" => FlightStatus.Boarding,
+            "departed" => FlightStatus.Departed,
+            "landed" or "arrived" => FlightStatus.Arrived,
+            _ => FlightStatus.OnTime // Default fallback
+        };
+    }
+}
+
+public class WeatherData
+{
+    public string Location { get; set; } = string.Empty;
+    public double Temperature { get; set; }
+    public double TemperatureFahrenheit => (Temperature * 9 / 5) + 32;
+    public string Conditions { get; set; } = string.Empty;
+    public string Description { get; set; } = string.Empty;
+    public double Humidity { get; set; }
+    public double Pressure { get; set; }
+    public double Visibility { get; set; }
+    public double WindSpeed { get; set; }
+    public int WindDirection { get; set; }
+    public string WindDirectionText { get; set; } = string.Empty;
+    public DateTime LastUpdated { get; set; }
 }

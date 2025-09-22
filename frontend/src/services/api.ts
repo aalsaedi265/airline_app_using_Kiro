@@ -213,6 +213,8 @@ export interface SeatMapType {
   rows: SeatRow[];
 }
 
+export type SeatMap = SeatMapType;
+
 export interface SeatRow {
   rowNumber: number;
   seats: Seat[];

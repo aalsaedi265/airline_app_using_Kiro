@@ -277,8 +277,8 @@ The application uses real external APIs for flight and weather data. Configure A
 - **Free Tiers**: Both APIs offer free tiers sufficient for development
 - **Authentic Experience**: Real aviation data for realistic simulation
 
-### Environment Variables (Optional)
-For Docker deployments, you can override default settings:
+### Environment Variables (Required)
+Create a `.env` file in the root directory with these variables:
 
 ```bash
 # Database
@@ -286,18 +286,37 @@ POSTGRES_DB=AirlineSimulationDb
 POSTGRES_USER=postgres
 POSTGRES_PASSWORD=postgres
 
-# JWT Secret
+# JWT Secret (generate your own)
 JWT_SECRET=your-super-secret-key-that-is-at-least-32-characters-long
+
+# External APIs (get free keys)
+AVIATION_STACK_API_KEY=your-aviationstack-api-key
+OPENWEATHER_API_KEY=your-openweathermap-api-key
 ```
 
 ## 🚀 Quick Start Guide
 
-### 1. Start the Database
+### 1. Get API Keys (Required)
+- **AviationStack**: Sign up at https://aviationstack.com (free tier: 1,000 requests/month)
+- **OpenWeatherMap**: Sign up at https://openweathermap.org (free tier: 1,000 calls/day)
+
+### 2. Create Environment File
+Create `.env` file in root directory:
+```bash
+POSTGRES_DB=AirlineSimulationDb
+POSTGRES_USER=postgres
+POSTGRES_PASSWORD=postgres
+JWT_SECRET=your-super-secret-key-that-is-at-least-32-characters-long
+AVIATION_STACK_API_KEY=your-aviationstack-api-key
+OPENWEATHER_API_KEY=your-openweathermap-api-key
+```
+
+### 3. Start the Database
 ```bash
 docker-compose -f docker-compose.dev.yml up -d
 ```
 
-### 2. Run the Backend
+### 4. Run the Backend
 ```bash
 cd backend
 dotnet restore
@@ -305,14 +324,14 @@ dotnet ef database update
 dotnet run
 ```
 
-### 3. Run the Frontend
+### 5. Run the Frontend
 ```bash
 cd frontend
 npm install
 npm start
 ```
 
-### 4. Access the Application
+### 6. Access the Application
 - **Frontend**: http://localhost:3000
 - **Backend API**: http://localhost:5000
 - **API Documentation**: http://localhost:5000/swagger

@@ -19,7 +19,9 @@ public class AviationStackService : IFlightDataService
     {
         _httpClient = httpClient;
         _logger = logger;
-        _apiKey = configuration["AviationStack:ApiKey"] ?? throw new InvalidOperationException("AviationStack API key not configured");
+        _apiKey = Environment.GetEnvironmentVariable("AVIATION_STACK_API_KEY") ?? 
+                  configuration["AviationStack:ApiKey"] ?? 
+                  throw new InvalidOperationException("AviationStack API key not configured");
         
         // Configure retry policy with exponential backoff
         _retryPolicy = Policy
