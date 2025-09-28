@@ -1,4 +1,5 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
+import { apiService } from '../services/api';
 
 interface User {
   id: string;
@@ -17,10 +18,9 @@ interface AuthContextType {
 
 interface RegisterData {
   email: string;
-  password: string;
   firstName: string;
   lastName: string;
-  phoneNumber: string;
+  password: string;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -45,27 +45,37 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     // Check for existing token on app load
     const token = localStorage.getItem('authToken');
     if (token) {
-      // Validate token and set user - placeholder implementation
-      setUser({
-        id: '1',
-        email: 'user@example.com',
-        firstName: 'John',
-        lastName: 'Doe'
-      });
+      // For now, we'll trust the token exists and let the backend validate it
+      // In a production app, you might want to decode the JWT to get user info
+      // or make a call to a /me endpoint to validate the token
+      try {
+        // Basic JWT decode to get user info (without verification)
+        const payload = JSON.parse(atob(token.split('.')[1]));
+        setUser({
+          id: payload.nameid || payload.sub,
+          email: payload.email,
+          firstName: payload.given_name || payload.name?.split(' ')[0] || '',
+          lastName: payload.family_name || payload.name?.split(' ')[1] || ''
+        });
+      } catch (error) {
+        // If token is invalid, remove it
+        localStorage.removeItem('authToken');
+        setUser(null);
+      }
     }
     setIsLoading(false);
   }, []);
 
   const login = async (email: string, password: string): Promise<boolean> => {
     try {
-      // Placeholder implementation - will be replaced with actual API call
+      const response = await apiService.login(email, password);
+      localStorage.setItem('authToken', response.token);
       setUser({
-        id: '1',
-        email,
-        firstName: 'John',
-        lastName: 'Doe'
+        id: response.user.id,
+        email: response.user.email,
+        firstName: response.user.firstName,
+        lastName: response.user.lastName
       });
-      localStorage.setItem('authToken', 'placeholder-token');
       return true;
     } catch (error) {
       console.error('Login failed:', error);
@@ -75,14 +85,14 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
   const register = async (userData: RegisterData): Promise<boolean> => {
     try {
-      // Placeholder implementation - will be replaced with actual API call
+      const response = await apiService.register(userData.email, userData.firstName, userData.lastName, userData.password);
+      localStorage.setItem('authToken', response.token);
       setUser({
-        id: '1',
-        email: userData.email,
-        firstName: userData.firstName,
-        lastName: userData.lastName
+        id: response.user.id,
+        email: response.user.email,
+        firstName: response.user.firstName,
+        lastName: response.user.lastName
       });
-      localStorage.setItem('authToken', 'placeholder-token');
       return true;
     } catch (error) {
       console.error('Registration failed:', error);

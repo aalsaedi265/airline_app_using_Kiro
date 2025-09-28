@@ -5,6 +5,25 @@ body {
     sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  background: linear-gradient(135deg, #1e3c72 0%, #2a5298 50%, #1e3c72 100%);
+  min-height: 100vh;
+  position: relative;
+  color: #2c3e50;
+}
+
+body::before {
+  content: '';
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: 
+    radial-gradient(circle at 20% 80%, rgba(255, 215, 0, 0.1) 0%, transparent 50%),
+    radial-gradient(circle at 80% 20%, rgba(220, 20, 60, 0.1) 0%, transparent 50%),
+    radial-gradient(circle at 40% 40%, rgba(30, 144, 255, 0.1) 0%, transparent 50%);
+  pointer-events: none;
+  z-index: -1;
 }
 
 code {
@@ -20,24 +39,82 @@ code {
   max-width: 1200px;
   margin: 0 auto;
   padding: 0 20px;
+  position: relative;
+}
+
+/* Pirate Ship Decorative Elements */
+.flight-board {
+  position: relative;
+  padding: 20px;
+}
+
+.flight-board::before {
+  content: '⚓';
+  position: absolute;
+  top: 10px;
+  right: 20px;
+  font-size: 24px;
+  color: #ffd700;
+  opacity: 0.3;
+  animation: float 3s ease-in-out infinite;
+}
+
+.flight-board::after {
+  content: '⚓';
+  position: absolute;
+  bottom: 10px;
+  left: 20px;
+  font-size: 24px;
+  color: #ffd700;
+  opacity: 0.3;
+  animation: float 3s ease-in-out infinite reverse;
+}
+
+@keyframes float {
+  0%, 100% { transform: translateY(0px); }
+  50% { transform: translateY(-10px); }
 }
 
 .btn {
-  padding: 10px 20px;
-  border: none;
-  border-radius: 4px;
+  padding: 12px 24px;
+  border: 2px solid transparent;
+  border-radius: 8px;
   cursor: pointer;
   font-size: 16px;
-  transition: background-color 0.3s;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  transition: all 0.3s ease;
+  position: relative;
+  overflow: hidden;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+}
+
+.btn::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+  transition: left 0.5s;
+}
+
+.btn:hover::before {
+  left: 100%;
 }
 
 .btn-primary {
-  background-color: #007bff;
-  color: white;
+  background: linear-gradient(135deg, #dc143c 0%, #b71c1c 100%);
+  color: #fff;
+  border-color: #8b0000;
 }
 
 .btn-primary:hover {
-  background-color: #0056b3;
+  background: linear-gradient(135deg, #b71c1c 0%, #8b0000 100%);
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(220, 20, 60, 0.4);
 }
 
 .form-group {
@@ -99,62 +176,214 @@ code {
   border: 1px solid #f5c6cb;
 }
 
+.field-error {
+  color: #dc3545;
+  font-size: 0.875rem;
+  margin-top: 0.25rem;
+  font-weight: 500;
+}
+
+.form-group input.error {
+  border-color: #dc3545;
+  box-shadow: 0 0 0 0.2rem rgba(220, 53, 69, 0.25);
+}
+
+.password-requirements {
+  margin-top: 0.5rem;
+  padding: 0.75rem;
+  background-color: #f8f9fa;
+  border: 1px solid #dee2e6;
+  border-radius: 4px;
+  font-size: 0.875rem;
+}
+
+.requirement-title {
+  font-weight: 600;
+  color: #495057;
+  margin-bottom: 0.5rem;
+}
+
+.requirement {
+  margin: 0.25rem 0;
+  padding-left: 0.5rem;
+  transition: color 0.2s ease;
+}
+
+.requirement.met {
+  color: #28a745;
+  font-weight: 500;
+}
+
+.requirement.unmet {
+  color: #6c757d;
+}
+
+.requirement.recommended {
+  color: #ffc107;
+  font-weight: 500;
+}
+
 /* Home page styling */
 .hero {
   text-align: center;
-  padding: 4rem 0;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  color: white;
-  margin: -2rem -20px 2rem -20px;
+  padding: 5rem 2rem;
+  background: linear-gradient(135deg, #1e3c72 0%, #2a5298 50%, #1e3c72 100%);
+  color: #ffd700;
+  margin: -2rem -20px 3rem -20px;
+  position: relative;
+  overflow: hidden;
+  border-radius: 0 0 30px 30px;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
+}
+
+.hero::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 4px;
+  background: linear-gradient(90deg, #ffd700, #ff6b35, #ffd700);
+}
+
+.hero::after {
+  content: '🏙️ ✈️ 🏙️';
+  position: absolute;
+  top: 20px;
+  right: 30px;
+  font-size: 24px;
+  opacity: 0.3;
+  animation: float 4s ease-in-out infinite;
 }
 
 .hero h1 {
-  font-size: 3rem;
-  margin-bottom: 1rem;
+  font-size: 3.5rem;
+  margin-bottom: 1.5rem;
+  font-weight: 800;
+  text-shadow: 3px 3px 6px rgba(0, 0, 0, 0.5);
+  letter-spacing: 1px;
+  position: relative;
+  z-index: 1;
 }
 
 .hero p {
-  font-size: 1.2rem;
-  margin-bottom: 2rem;
+  font-size: 1.4rem;
+  margin-bottom: 2.5rem;
+  font-weight: 500;
+  text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
+  position: relative;
+  z-index: 1;
 }
 
 .cta-buttons {
   display: flex;
-  gap: 1rem;
+  gap: 1.5rem;
   justify-content: center;
+  position: relative;
+  z-index: 1;
+}
+
+.btn-secondary {
+  background: linear-gradient(135deg, #ffd700 0%, #ff6b35 100%);
+  color: #1e3c72;
+  border-color: #ff8c00;
+  font-weight: 700;
+}
+
+.btn-secondary:hover {
+  background: linear-gradient(135deg, #ff6b35 0%, #ffd700 100%);
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(255, 215, 0, 0.4);
 }
 
 .features {
-  padding: 2rem 0;
+  padding: 3rem 0;
+  background: linear-gradient(135deg, rgba(30, 60, 114, 0.05) 0%, rgba(42, 82, 152, 0.05) 100%);
+  border-radius: 30px 30px 0 0;
+  margin-top: 2rem;
 }
 
 .features h2 {
   text-align: center;
-  margin-bottom: 2rem;
+  margin-bottom: 3rem;
+  font-size: 2.5rem;
+  font-weight: 700;
+  color: #1e3c72;
+  text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.1);
+  position: relative;
+}
+
+.features h2::before {
+  content: '🏙️';
+  position: absolute;
+  left: -50px;
+  top: 50%;
+  transform: translateY(-50%);
+  font-size: 2rem;
+  color: #ffd700;
+  opacity: 0.7;
+}
+
+.features h2::after {
+  content: '✈️';
+  position: absolute;
+  right: -50px;
+  top: 50%;
+  transform: translateY(-50%);
+  font-size: 2rem;
+  color: #ffd700;
+  opacity: 0.7;
 }
 
 .feature-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-  gap: 2rem;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 2.5rem;
+  padding: 0 2rem;
 }
 
 .feature-card {
-  background: white;
-  padding: 2rem;
-  border-radius: 8px;
-  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+  background: linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%);
+  padding: 2.5rem;
+  border-radius: 20px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.15);
   text-align: center;
+  transition: all 0.3s ease;
+  border: 2px solid rgba(255, 215, 0, 0.2);
+  position: relative;
+  overflow: hidden;
+}
+
+.feature-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 4px;
+  background: linear-gradient(90deg, #ffd700, #ff6b35, #ffd700);
+}
+
+.feature-card:hover {
+  transform: translateY(-8px) scale(1.02);
+  box-shadow: 0 15px 40px rgba(0, 0, 0, 0.2);
+  border-color: rgba(255, 215, 0, 0.5);
 }
 
 .feature-card h3 {
-  margin-bottom: 1rem;
-  color: #333;
+  margin-bottom: 1.5rem;
+  color: #1e3c72;
+  font-size: 1.4rem;
+  font-weight: 700;
+  text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.1);
 }
 
 .feature-card p {
-  margin-bottom: 1.5rem;
-  color: #666;
+  margin-bottom: 2rem;
+  color: #2c3e50;
+  font-size: 1.1rem;
+  line-height: 1.6;
+  font-weight: 500;
 }
 
 /* Flight board styling */
@@ -163,59 +392,576 @@ code {
   justify-content: space-between;
   align-items: center;
   margin-bottom: 2rem;
+  background: linear-gradient(135deg, #1a237e 0%, #283593 50%, #1a237e 100%);
+  padding: 20px 30px;
+  border-radius: 15px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+  border: 2px solid rgba(255, 215, 0, 0.3);
+  position: relative;
+  overflow: hidden;
+}
+
+.flight-board-header::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 3px;
+  background: linear-gradient(90deg, #ffd700, #ff6b35, #ffd700);
+}
+
+.flight-board-header h1 {
+  color: #ffd700;
+  font-size: 2.2rem;
+  font-weight: 700;
+  text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
+  margin: 0;
+  letter-spacing: 1px;
 }
 
 .connection-status {
-  padding: 0.5rem 1rem;
-  border-radius: 4px;
+  padding: 8px 16px;
+  border-radius: 20px;
   font-weight: bold;
+  background: linear-gradient(135deg, #4caf50 0%, #2e7d32 100%);
+  color: white;
+  border: 2px solid #1b5e20;
+  box-shadow: 0 4px 15px rgba(76, 175, 80, 0.3);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  font-size: 12px;
 }
 
 .flight-filters {
   display: flex;
   gap: 1rem;
   margin-bottom: 2rem;
+  background: linear-gradient(135deg, #1565c0 0%, #0d47a1 100%);
+  padding: 20px;
+  border-radius: 15px;
+  box-shadow: 0 6px 25px rgba(0, 0, 0, 0.2);
+  border: 2px solid rgba(255, 215, 0, 0.2);
 }
 
 .search-input, .filter-select {
-  padding: 0.5rem;
-  border: 1px solid #ddd;
-  border-radius: 4px;
+  padding: 12px 16px;
+  border: 2px solid rgba(255, 215, 0, 0.3);
+  border-radius: 8px;
   font-size: 16px;
+  background: rgba(255, 255, 255, 0.95);
+  color: #2c3e50;
+  font-weight: 500;
+  transition: all 0.3s ease;
+  box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.search-input:focus, .filter-select:focus {
+  outline: none;
+  border-color: #ffd700;
+  box-shadow: 0 0 0 3px rgba(255, 215, 0, 0.2);
+  transform: translateY(-1px);
+}
+
+.search-input::placeholder {
+  color: #7f8c8d;
+  font-style: italic;
 }
 
 .search-input {
   flex: 1;
 }
 
+.filter-select {
+  min-width: 200px;
+  cursor: pointer;
+}
+
+.filter-info {
+  display: flex;
+  align-items: center;
+  color: #ffd700;
+  font-size: 14px;
+  font-weight: 600;
+  min-width: 200px;
+  text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.3);
+}
+
 .flight-table {
   overflow-x: auto;
+  border-radius: 15px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+  border: 2px solid rgba(255, 215, 0, 0.2);
 }
 
 .flight-table table {
   width: 100%;
   border-collapse: collapse;
-  background: white;
-  border-radius: 8px;
+  background: linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%);
+  border-radius: 15px;
   overflow: hidden;
-  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
 }
 
 .flight-table th,
 .flight-table td {
-  padding: 1rem;
+  padding: 1.2rem;
   text-align: left;
-  border-bottom: 1px solid #eee;
+  border-bottom: 2px solid rgba(255, 215, 0, 0.2);
+  transition: all 0.3s ease;
 }
 
 .flight-table th {
-  background-color: #f8f9fa;
-  font-weight: bold;
-  color: #333;
+  background: linear-gradient(135deg, #1a237e 0%, #283593 100%);
+  font-weight: 700;
+  color: #ffd700;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  font-size: 14px;
+  text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.5);
+}
+
+.flight-table tr:hover {
+  background: linear-gradient(135deg, rgba(255, 215, 0, 0.1) 0%, rgba(255, 107, 53, 0.1) 100%);
+  transform: scale(1.01);
+}
+
+.flight-table tr:nth-child(even) {
+  background: rgba(255, 215, 0, 0.05);
 }
 
 .no-data {
   text-align: center;
-  color: #666;
+  color: #ffd700;
   font-style: italic;
+  font-size: 18px;
+  font-weight: 600;
+  text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.5);
+  padding: 40px;
+  background: linear-gradient(135deg, rgba(26, 35, 126, 0.8) 0%, rgba(40, 53, 147, 0.8) 100%);
+  border-radius: 15px;
+  border: 2px solid rgba(255, 215, 0, 0.3);
+}
+
+.loading {
+  text-align: center;
+  color: #ffd700;
+  font-size: 18px;
+  font-weight: 600;
+  text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.5);
+  padding: 40px;
+  background: linear-gradient(135deg, rgba(26, 35, 126, 0.8) 0%, rgba(40, 53, 147, 0.8) 100%);
+  border-radius: 15px;
+  border: 2px solid rgba(255, 215, 0, 0.3);
+  position: relative;
+  overflow: hidden;
+}
+
+.loading::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255, 215, 0, 0.2), transparent);
+  animation: loading-shimmer 2s infinite;
+}
+
+@keyframes loading-shimmer {
+  0% { left: -100%; }
+  100% { left: 100%; }
+}
+
+.error {
+  text-align: center;
+  color: #f44336;
+  font-size: 18px;
+  font-weight: 600;
+  text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.5);
+  padding: 40px;
+  background: linear-gradient(135deg, rgba(244, 67, 54, 0.1) 0%, rgba(211, 47, 47, 0.1) 100%);
+  border-radius: 15px;
+  border: 2px solid rgba(244, 67, 54, 0.3);
+}
+
+/* Seat Map Styling */
+.seat-map {
+  max-width: 800px;
+  margin: 0 auto;
+  padding: 20px;
+  background: white;
+  border-radius: 12px;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+.seat-map-header {
+  text-align: center;
+  margin-bottom: 30px;
+}
+
+.seat-map-header h3 {
+  color: #333;
+  margin-bottom: 10px;
+}
+
+.seat-map-header p {
+  color: #666;
+  margin-bottom: 20px;
+}
+
+.seat-legend {
+  display: flex;
+  justify-content: center;
+  gap: 20px;
+  flex-wrap: wrap;
+  margin-bottom: 20px;
+}
+
+.legend-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 14px;
+}
+
+.aircraft-layout {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  margin: 20px 0;
+}
+
+.aircraft-nose,
+.aircraft-tail {
+  font-size: 24px;
+  color: #666;
+  margin: 10px 0;
+}
+
+.seat-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: 2px 0;
+}
+
+.row-number {
+  width: 30px;
+  text-align: center;
+  font-weight: 600;
+  color: #666;
+  font-size: 14px;
+}
+
+.seats {
+  display: flex;
+  gap: 4px;
+}
+
+.seat {
+  width: 40px;
+  height: 40px;
+  border: 2px solid #ddd;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  font-size: 12px;
+  font-weight: 600;
+  transition: all 0.2s ease;
+  user-select: none;
+}
+
+.seat:hover {
+  transform: scale(1.05);
+}
+
+.seat-available {
+  background-color: #e8f5e8;
+  border-color: #4caf50;
+  color: #2e7d32;
+}
+
+.seat-available:hover {
+  background-color: #c8e6c9;
+  border-color: #388e3c;
+}
+
+.seat-selected {
+  background-color: #2196f3;
+  border-color: #1976d2;
+  color: white;
+}
+
+.seat-selected:hover {
+  background-color: #1976d2;
+}
+
+.seat-unavailable {
+  background-color: #f5f5f5;
+  border-color: #ccc;
+  color: #999;
+  cursor: not-allowed;
+}
+
+.seat-unavailable:hover {
+  transform: none;
+}
+
+.seat-other-class {
+  background-color: #fff3e0;
+  border-color: #ff9800;
+  color: #f57c00;
+}
+
+.seat-other-class:hover {
+  background-color: #ffe0b2;
+}
+
+.seat-map-loading,
+.seat-map-error {
+  text-align: center;
+  padding: 40px 20px;
+  font-size: 18px;
+  color: #666;
+}
+
+.seat-map-error {
+  color: #f44336;
+  background-color: #ffebee;
+  border: 1px solid #ffcdd2;
+  border-radius: 8px;
+}
+
+.seat-map-footer {
+  text-align: center;
+  margin-top: 30px;
+  padding-top: 20px;
+  border-top: 1px solid #eee;
+}
+
+.selected-seats {
+  margin-top: 10px;
+  padding: 10px;
+  background-color: #e3f2fd;
+  border-radius: 8px;
+  color: #1976d2;
+}
+
+@media (max-width: 768px) {
+  .seat-map {
+    padding: 15px;
+  }
+  
+  .seat-legend {
+    flex-direction: column;
+    align-items: center;
+    gap: 10px;
+  }
+  
+  .seat {
+    width: 35px;
+    height: 35px;
+    font-size: 11px;
+  }
+  
+  .seats {
+    gap: 2px;
+  }
+}
+
+/* Flight Status Colors - Pirate Ship Theme */
+.status {
+  padding: 6px 12px;
+  border-radius: 20px;
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  border: 2px solid transparent;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+  transition: all 0.3s ease;
+}
+
+.status:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+}
+
+.status-on-time {
+  background: linear-gradient(135deg, #4caf50 0%, #2e7d32 100%);
+  color: #fff;
+  border-color: #1b5e20;
+  text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.3);
+}
+
+.status-delayed {
+  background: linear-gradient(135deg, #ff9800 0%, #f57c00 100%);
+  color: #fff;
+  border-color: #e65100;
+  text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.3);
+}
+
+.status-boarding {
+  background: linear-gradient(135deg, #2196f3 0%, #1976d2 100%);
+  color: #fff;
+  border-color: #0d47a1;
+  text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.3);
+}
+
+.status-cancelled {
+  background: linear-gradient(135deg, #f44336 0%, #d32f2f 100%);
+  color: #fff;
+  border-color: #b71c1c;
+  text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.3);
+}
+
+.status-departed {
+  background: linear-gradient(135deg, #9c27b0 0%, #7b1fa2 100%);
+  color: #fff;
+  border-color: #4a148c;
+  text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.3);
+}
+
+.status-arrived {
+  background: linear-gradient(135deg, #00bcd4 0%, #0097a7 100%);
+  color: #fff;
+  border-color: #006064;
+  text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.3);
+}
+
+.status-unknown {
+  background: linear-gradient(135deg, #607d8b 0%, #455a64 100%);
+  color: #fff;
+  border-color: #263238;
+  text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.3);
+}
+
+/* Additional Pirate Ship Themed Elements */
+.flight-table th:first-child::before {
+  content: '⚓';
+  margin-right: 8px;
+  color: #ffd700;
+}
+
+.flight-table th:last-child::after {
+  content: '⚓';
+  margin-left: 8px;
+  color: #ffd700;
+}
+
+/* Scrollbar Styling */
+.flight-table::-webkit-scrollbar {
+  height: 8px;
+}
+
+.flight-table::-webkit-scrollbar-track {
+  background: rgba(255, 215, 0, 0.1);
+  border-radius: 4px;
+}
+
+.flight-table::-webkit-scrollbar-thumb {
+  background: linear-gradient(135deg, #ffd700 0%, #ff6b35 100%);
+  border-radius: 4px;
+}
+
+.flight-table::-webkit-scrollbar-thumb:hover {
+  background: linear-gradient(135deg, #ff6b35 0%, #ffd700 100%);
+}
+
+/* Responsive Design for Mobile */
+@media (max-width: 768px) {
+  .flight-board-header {
+    flex-direction: column;
+    gap: 15px;
+    text-align: center;
+  }
+  
+  .flight-board-header h1 {
+    font-size: 1.8rem;
+  }
+  
+  .flight-filters {
+    flex-direction: column;
+    gap: 15px;
+  }
+  
+  .filter-info {
+    min-width: auto;
+    text-align: center;
+  }
+  
+  .flight-table th,
+  .flight-table td {
+    padding: 0.8rem;
+    font-size: 14px;
+  }
+  
+  .hero h1 {
+    font-size: 2.5rem;
+  }
+  
+  .hero p {
+    font-size: 1.2rem;
+  }
+  
+  .cta-buttons {
+    flex-direction: column;
+    align-items: center;
+  }
+  
+  .features h2::before,
+  .features h2::after {
+    display: none;
+  }
+  
+  .feature-grid {
+    grid-template-columns: 1fr;
+    padding: 0 1rem;
+  }
+  
+  .feature-card {
+    padding: 2rem;
+  }
+}
+
+/* Home page specific animations */
+@keyframes wave {
+  0%, 100% { transform: rotate(0deg); }
+  25% { transform: rotate(5deg); }
+  75% { transform: rotate(-5deg); }
+}
+
+.hero::after {
+  animation: wave 6s ease-in-out infinite;
+}
+
+/* Additional maritime decorations */
+.home {
+  position: relative;
+  min-height: 100vh;
+}
+
+.home::before {
+  content: '🏙️';
+  position: fixed;
+  top: 10%;
+  left: 5%;
+  font-size: 2rem;
+  opacity: 0.1;
+  animation: float 8s ease-in-out infinite;
+  z-index: -1;
+}
+
+.home::after {
+  content: '✈️';
+  position: fixed;
+  top: 60%;
+  right: 5%;
+  font-size: 2rem;
+  opacity: 0.1;
+  animation: float 8s ease-in-out infinite reverse;
+  z-index: -1;
 }

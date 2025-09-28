@@ -8,6 +8,8 @@ public interface IFlightService
     Task<Flight?> GetFlightDetailsAsync(string flightNumber, DateTime date);
     Task<WeatherInfo?> GetWeatherAsync(string airportCode);
     Task UpdateFlightStatusAsync(string flightNumber, FlightStatus status);
+    Task UpdateFlightGateAsync(string flightNumber, string? newGate, string? terminal = null);
+    Task UpdateFlightDelayAsync(string flightNumber, int delayMinutes, string? reason = null);
 }
 
 public class WeatherInfo

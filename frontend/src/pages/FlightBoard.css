@@ -1,0 +1,285 @@
+.flight-board {
+  max-width: 1400px;
+  margin: 0 auto;
+  padding: 20px;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+.flight-board-header {
+  text-align: center;
+  margin-bottom: 30px;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  padding: 30px;
+  border-radius: 12px;
+  box-shadow: 0 8px 32px rgba(102, 126, 234, 0.3);
+}
+
+.flight-board-header h1 {
+  margin: 0 0 15px 0;
+  font-size: 2.2rem;
+  font-weight: 700;
+}
+
+.connection-status {
+  font-size: 1rem;
+  font-weight: 500;
+  padding: 8px 16px;
+  background: rgba(255, 255, 255, 0.2);
+  border-radius: 20px;
+  display: inline-block;
+}
+
+.flight-filters {
+  display: flex;
+  gap: 20px;
+  align-items: center;
+  margin-bottom: 30px;
+  padding: 20px;
+  background: white;
+  border-radius: 12px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+  flex-wrap: wrap;
+}
+
+.search-input {
+  flex: 1;
+  min-width: 300px;
+  padding: 12px 16px;
+  border: 2px solid #e9ecef;
+  border-radius: 8px;
+  font-size: 1rem;
+  transition: border-color 0.3s ease;
+}
+
+.search-input:focus {
+  outline: none;
+  border-color: #667eea;
+  box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+}
+
+.filter-select {
+  padding: 12px 16px;
+  border: 2px solid #e9ecef;
+  border-radius: 8px;
+  font-size: 1rem;
+  background: white;
+  cursor: pointer;
+  transition: border-color 0.3s ease;
+  min-width: 150px;
+}
+
+.filter-select:focus {
+  outline: none;
+  border-color: #667eea;
+  box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+}
+
+.filter-info {
+  color: #6c757d;
+  font-size: 0.9rem;
+  font-weight: 500;
+  white-space: nowrap;
+}
+
+.flight-table {
+  background: white;
+  border-radius: 12px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+  overflow: hidden;
+}
+
+.flight-table table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.flight-table th {
+  background: #f8f9fa;
+  color: #495057;
+  font-weight: 600;
+  padding: 20px 15px;
+  text-align: left;
+  border-bottom: 2px solid #e9ecef;
+  font-size: 0.9rem;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.flight-table td {
+  padding: 15px;
+  border-bottom: 1px solid #e9ecef;
+  vertical-align: middle;
+}
+
+.flight-table tbody tr:hover {
+  background: #f8f9fa;
+  transition: background-color 0.3s ease;
+}
+
+.flight-table tbody tr:last-child td {
+  border-bottom: none;
+}
+
+.status {
+  padding: 6px 12px;
+  border-radius: 20px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  display: inline-block;
+}
+
+.status-on-time {
+  background: #d4edda;
+  color: #155724;
+}
+
+.status-delayed {
+  background: #fff3cd;
+  color: #856404;
+}
+
+.status-boarding {
+  background: #cce5ff;
+  color: #004085;
+}
+
+.status-cancelled {
+  background: #f8d7da;
+  color: #721c24;
+}
+
+.status-departed {
+  background: #e2e3e5;
+  color: #383d41;
+}
+
+.status-arrived {
+  background: #d1ecf1;
+  color: #0c5460;
+}
+
+.status-unknown {
+  background: #f8f9fa;
+  color: #6c757d;
+}
+
+.book-btn {
+  background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+  color: white;
+  border: none;
+  padding: 8px 16px;
+  border-radius: 6px;
+  font-size: 0.9rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  white-space: nowrap;
+}
+
+.book-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 15px rgba(40, 167, 69, 0.3);
+  background: linear-gradient(135deg, #218838 0%, #1ea085 100%);
+}
+
+.not-bookable {
+  color: #6c757d;
+  font-size: 0.9rem;
+  font-style: italic;
+}
+
+.loading {
+  text-align: center;
+  padding: 60px;
+  font-size: 1.2rem;
+  color: #666;
+}
+
+.error {
+  text-align: center;
+  padding: 60px;
+  font-size: 1.2rem;
+  color: #dc3545;
+  background: #f8d7da;
+  border-radius: 8px;
+  border: 1px solid #f5c6cb;
+}
+
+.no-data {
+  text-align: center;
+  color: #6c757d;
+  font-style: italic;
+  padding: 40px;
+}
+
+@media (max-width: 768px) {
+  .flight-board {
+    padding: 10px;
+  }
+  
+  .flight-board-header {
+    padding: 20px;
+  }
+  
+  .flight-board-header h1 {
+    font-size: 1.8rem;
+  }
+  
+  .flight-filters {
+    flex-direction: column;
+    gap: 15px;
+    align-items: stretch;
+  }
+  
+  .search-input {
+    min-width: auto;
+  }
+  
+  .filter-info {
+    text-align: center;
+  }
+  
+  .flight-table {
+    overflow-x: auto;
+  }
+  
+  .flight-table table {
+    min-width: 800px;
+  }
+  
+  .flight-table th,
+  .flight-table td {
+    padding: 10px 8px;
+    font-size: 0.9rem;
+  }
+  
+  .book-btn {
+    padding: 6px 12px;
+    font-size: 0.8rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .flight-board-header h1 {
+    font-size: 1.5rem;
+  }
+  
+  .flight-table th,
+  .flight-table td {
+    padding: 8px 6px;
+    font-size: 0.8rem;
+  }
+  
+  .status {
+    padding: 4px 8px;
+    font-size: 0.7rem;
+  }
+  
+  .book-btn {
+    padding: 5px 10px;
+    font-size: 0.7rem;
+  }
+}

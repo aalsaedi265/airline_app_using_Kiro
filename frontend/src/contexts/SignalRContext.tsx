@@ -27,8 +27,11 @@ export const SignalRProvider: React.FC<SignalRProviderProps> = ({ children }) =>
   const [isConnected, setIsConnected] = useState(false);
 
   useEffect(() => {
+    // Get base URL without /api suffix for SignalR hub
+    const apiUrl = process.env.REACT_APP_API_URL || 'http://localhost:5000/api';
+    const baseUrl = apiUrl.replace('/api', '');
     const newConnection = new HubConnectionBuilder()
-      .withUrl('http://localhost:5000/flightUpdatesHub')
+      .withUrl(`${baseUrl}/flightUpdatesHub`)
       .withAutomaticReconnect()
       .configureLogging(LogLevel.Information)
       .build();

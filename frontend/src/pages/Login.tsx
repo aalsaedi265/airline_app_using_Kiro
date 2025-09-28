@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 
 const Login: React.FC = () => {
@@ -10,6 +10,10 @@ const Login: React.FC = () => {
   
   const { login } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
+
+  // Get the intended destination from location state
+  const from = location.state?.from?.pathname || '/';
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -19,7 +23,18 @@ const Login: React.FC = () => {
     try {
       const success = await login(email, password);
       if (success) {
-        navigate('/');
+        // Check if there's a stored flight booking intent
+        const storedBookingFlight = sessionStorage.getItem('intendedBookingFlight');
+        if (storedBookingFlight) {
+          const bookingData = JSON.parse(storedBookingFlight);
+          sessionStorage.removeItem('intendedBookingFlight');
+          navigate(`/booking-checkout/${bookingData.flight.flightNumber}`, {
+            state: bookingData,
+            replace: true
+          });
+        } else {
+          navigate(from, { replace: true });
+        }
       } else {
         setError('Invalid email or password');
       }
